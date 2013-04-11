@@ -23,6 +23,7 @@ namespace Hypebeast\WordpressBundle\Wordpress;
  */
 class ApiAbstraction
 {
+    protected $loaded;
 
     /**
      * Constructor. Loads the Wordpress API through ApiLoader
@@ -31,12 +32,19 @@ class ApiAbstraction
      */
     public function __construct(ApiLoader $apiLoader)
     {
-        $apiLoader->load();
+        $ret = $apiLoader->load();
+
+        $this->loaded = !!$ret;
     }
     
     public function __call($function, $arguments)
     {
-        return call_user_func_array($function, $arguments);
+        if($this->loaded)
+        {
+            return call_user_func_array($function, $arguments);
+        }
+
+        return false;
     }
 
 }

@@ -20,6 +20,7 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('wordpress_path')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('domain')->defaultValue(null)->end()
+                ->booleanNode('enabled')->defaultValue(true)->end()
                 ->booleanNode('short_init')->defaultValue(false)->end()
                 ->scalarNode('table_prefix')->defaultValue('wp_')->end()
             ->end()

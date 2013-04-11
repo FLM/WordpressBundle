@@ -40,6 +40,13 @@ class ApiLoader
     private $domain;
 
     /**
+     * Enabled?
+     *
+     * @var boolean
+     */
+    private $enabled;
+
+    /**
      * HTTP Host
      *
      * @var string
@@ -52,11 +59,12 @@ class ApiLoader
      * @param string $wordpressPath path to the WordPress installation to use.
      * @param string $domain WordPress site's domain.
      */
-    public function __construct($wordpressPath, $shortInit = false, $domain = null)
+    public function __construct($wordpressPath, $shortInit = false, $domain = null, $enabled = true)
     {
         $this->wordpressPath = $wordpressPath;
         $this->domain        = $domain;
         $this->httpHost      = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : null;
+        $this->enabled       = $enabled;
 
         if(!defined('SHORTINIT')) {
             define('SHORTINIT', $shortInit);
@@ -73,6 +81,11 @@ class ApiLoader
      */
     public function load($bootstrap='wp-load.php')
     {
+        if(false === $this->enabled)
+        {
+            return false;
+        }
+
         // No need to load Wordpress again if it is already loaded.
         if( $this->isWordpressAlreadyLoaded($bootstrap) ) {
             return;
@@ -93,6 +106,8 @@ class ApiLoader
         // Need $wpdb for ms-settings.php.
         global $wp_rewrite, $wpdb;
 
+        $tz = date_default_timezone_get();
+
         $returnValue = require_once $bootstrap;
 
         // Stop most of WordPress classes and functions from being loaded.
@@ -101,6 +116,7 @@ class ApiLoader
             require(ABSPATH.WPINC.'/l10n.php');
 
             // Load most of WordPress.
+            require(ABSPATH.WPINC.'/kses.php');
             require(ABSPATH.WPINC.'/formatting.php');
             require(ABSPATH.WPINC.'/capabilities.php');
             require(ABSPATH.WPINC.'/user.php');
@@ -119,13 +135,20 @@ class ApiLoader
         // Work around WordPress not explicitly globalising variables. See #5
         foreach (get_defined_vars() as $name => $value) {
             if ($name == 'bootstrap' or $name == 'returnValue') continue;
-            $GLOBALS[$name] = $value;
+            if(!isset($GLOBALS[$name]))
+            {
+                $GLOBALS[$name] = $value;
+            }
         }
 
         // Change back the HTTP_HOST to the original one.
         if($this->domain) {
             $_SERVER['HTTP_HOST'] = $this->httpHost;
         }
+
+        remove_filter('shutdown', 'wp_ob_end_flush_all', 1);
+
+        date_default_timezone_set($tz);
 
         return $returnValue;
     }
