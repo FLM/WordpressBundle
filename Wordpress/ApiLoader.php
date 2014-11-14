@@ -121,6 +121,7 @@ class ApiLoader
             require(ABSPATH.WPINC.'/capabilities.php');
             require(ABSPATH.WPINC.'/user.php');
             require(ABSPATH.WPINC.'/meta.php');
+            require(ABSPATH.WPINC.'/session.php');
             require(ABSPATH.WPINC.'/pluggable.php');
             wp_cookie_constants();
 
